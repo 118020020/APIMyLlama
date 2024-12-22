@@ -4,6 +4,7 @@ from db import db_instance
 from api import API
 import cmd
 import threading
+from utils import Utils
 
 app = Flask(__name__)
 app.json.sort_keys = False
@@ -107,7 +108,7 @@ class CLI(cmd.Cmd):
         return True
 
 def main():
-    print('APIMyLlama V2 is being started. Thanks for choosing Gimer Studios.')
+    print('APIMyLlama python version is started.')
     
     # Initialize database
     db = db_instance.initialize_database()

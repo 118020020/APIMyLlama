@@ -6,6 +6,16 @@
 
 APIMyLlama is a server application that provides an interface to interact with the Ollama API, a powerful AI tool to run LLMs. It allows users to run this alongside Ollama to easily distribute API keys to create amazing things.
 
+### Key Features
+
+- API Key Management with rate limiting and usage tracking
+- SQLite database for persistent storage
+- Webhook support for event notifications
+- Health check endpoint
+- Configurable server port and Ollama URL
+- Interactive CLI interface
+- API key activation/deactivation support
+
 ### Support Us
 
 We now have a [Ko-fi](https://ko-fi.com/gimerstudios) open if you would like to help and donate to the project. We love to keep it free and open source when possible and donating helps a lot.
@@ -19,6 +29,7 @@ We now have a [Ko-fi](https://ko-fi.com/gimerstudios) open if you would like to 
 - Python 3.8 or higher
 - [Ollama](https://ollama.com/download) installed on your system
 - pip (Python package installer)
+- SQLite3
 
 ## Ollama Setup
 If you already have Ollama setup with the 'ollama serve' command and your desired model, you can skip this section. If not, here's how to set it up:
@@ -56,23 +67,56 @@ On startup, you'll be prompted to:
 - Enter a port number for the API server
 - Provide the Ollama server URL (default is "http://localhost:11434")
 
+The application will automatically:
+- Initialize the SQLite database (apiKeys.db)
+- Create necessary tables for API keys, usage tracking, and webhooks
+- Start the Flask server and CLI interface
+
 ## CLI Commands
 
 The application provides an interactive command-line interface with the following commands:
 
 - `generatekey`: Generate a new API key
-- `listkey`: List all API keys
+- `listkey`: List all API keys with their creation date and active status
 - `removekey <key>`: Remove an API key
 - `addkey <key>`: Add a custom API key
 - `changeport <port>`: Change the server port
 - `changeollamaurl <url>`: Change the Ollama server URL
-- `ratelimit <key> <limit>`: Set rate limit for an API key
-- `addwebhook <url>`: Add a webhook URL
+- `ratelimit <key> <limit>`: Set rate limit for an API key (default is 10 requests per minute)
+- `addwebhook <url>`: Add a webhook URL for event notifications
 - `deletewebhook <id>`: Delete a webhook
 - `listwebhooks`: List all webhooks
 - `activatekey <key>`: Activate an API key
 - `deactivatekey <key>`: Deactivate an API key
 - `exit`: Exit the CLI
+
+## API Endpoints
+
+### Health Check
+```
+GET /health?apikey=<YOUR_API_KEY>
+```
+Returns the API health status and current timestamp.
+
+### Generate Response
+```
+POST /generate
+{
+    "apikey": "<YOUR_API_KEY>",
+    "prompt": "<YOUR_PROMPT>",
+    "model": "<MODEL_NAME>",
+    "stream": <true|false>
+}
+```
+
+## Configuration Files
+
+The application uses two configuration files:
+
+- `port.conf`: Stores the server port number
+- `ollamaURL.conf`: Stores the Ollama server URL
+
+These files are automatically created and managed by the application.
 
 ## Running on Different Systems
 
@@ -100,49 +144,25 @@ OLLAMA_HOST=0.0.0.0 ollama serve
 
 Then, when configuring APIMyLlama, use the appropriate server URL:
 ```
-http://<YOUR_SERVER_IP>:11434
+http://<OLLAMA_SERVER_IP>:11434
 ```
 
-## API Endpoints
+## Error Handling
 
-### Health Check
-```
-GET /health?apikey=<YOUR_API_KEY>
-```
+### Common Issues and Solutions
 
-### Generate Response
-```
-POST /generate
-Content-Type: application/json
+1. **Rate Limit Exceeded**: Each API key has a default rate limit of 10 requests per minute. Use the `ratelimit` command to adjust this limit.
 
-{
-    "apikey": "<YOUR_API_KEY>",
-    "model": "llama2",
-    "prompt": "Your prompt here",
-    "stream": false,
-    "images": [],
-    "raw": false
-}
-```
+2. **Invalid or Deactivated API Key**: Ensure your API key exists and is active using the `listkey` command.
 
-## Troubleshooting
+3. **Database Connection Issues**: Make sure you have write permissions in the directory for the SQLite database (apiKeys.db).
 
-### Common Issues
+4. **Port Already in Use**: If the selected port is already in use, choose a different port using the `changeport` command.
 
-#### 1. Port Already in Use
-Choose a different port using the `changeport` command or modify the port.conf file.
-
-#### 2. Database Connection Issues
-Ensure you have write permissions in the application directory for the SQLite database.
-
-#### 3. Ollama Connection Error
-If you get "Error making request to Ollama API", verify:
-- Ollama is running (`ollama serve`)
-- The Ollama URL is correct (use `changeollamaurl` to update if needed)
-- Network connectivity between APIMyLlama and Ollama server
-
-#### 4. Rate Limiting
-Each API key has a default rate limit. Use the `ratelimit` command to adjust it if needed.
+5. **Ollama Connection Error**: If you get "Error making request to Ollama API", verify:
+   - Ollama is running (`ollama serve`)
+   - The Ollama URL is correct (check ollamaURL.conf)
+   - Network connectivity between APIMyLlama and Ollama server
 
 ## Examples to get response from API
 
